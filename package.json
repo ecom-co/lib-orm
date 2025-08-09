@@ -2,57 +2,8 @@
   "name": "@ecom-co/orm",
   "version": "0.1.5",
   "description": "Shared persistence layer: entities, transformers, repository utils for e-commerce projects",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./entities/*": {
-      "import": "./dist/entities/*.js",
-      "types": "./dist/entities/*.d.ts"
-    },
-    "./entities/core/*": {
-      "import": "./dist/entities/core/*.js",
-      "types": "./dist/entities/core/*.d.ts"
-    },
-    "./transformers/*": {
-      "import": "./dist/transformers/*.js",
-      "types": "./dist/transformers/*.d.ts"
-    },
-    "./datasource": {
-      "import": "./dist/datasource/index.js",
-      "types": "./dist/datasource/index.d.ts"
-    },
-    "./nest": {
-      "import": "./dist/nest/index.js",
-      "types": "./dist/nest/index.d.ts"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "entities/*": [
-        "dist/entities/*.d.ts"
-      ],
-      "entities/core/*": [
-        "dist/entities/core/*.d.ts"
-      ],
-      "transformers/*": [
-        "dist/transformers/*.d.ts"
-      ],
-      "datasource": [
-        "dist/datasource/index.d.ts"
-      ],
-      "nest": [
-        "dist/nest/index.d.ts"
-      ],
-      "*": [
-        "dist/index.d.ts"
-      ]
-    }
-  },
   "files": [
     "dist",
     "README.md"
