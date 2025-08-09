@@ -18,4 +18,17 @@ export abstract class OrmBaseEntity extends TypeOrmBaseEntity {
 
     @DeleteDateColumn({ type: 'timestamptz', name: 'deletedAt', nullable: true })
     deletedAt?: Date | null;
+
+    // Common helpers for all entities
+    get isSoftDeleted(): boolean {
+        return this.deletedAt != null;
+    }
+
+    markDeleted(at: Date = new Date()): void {
+        this.deletedAt = at;
+    }
+
+    clearDeleted(): void {
+        this.deletedAt = null;
+    }
 }

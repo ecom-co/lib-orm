@@ -9,19 +9,29 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
-    "build:watch": "tsc --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
     "clean": "rm -rf dist",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "prepublishOnly": "npm run clean && npm run build",
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish"
+    "release:major": "npm version major && npm publish",
+    "typeorm:generate": "typeorm-ts-node-commonjs migration:generate -d src/orm/data-source.ts",
+    "posttypeorm:generate": "npm run lint:fix",
+    "typeorm:create": "typeorm-ts-node-commonjs migration:create",
+    "typeorm:run": "typeorm-ts-node-commonjs migration:run -d src/orm/data-source.ts",
+    "typeorm:revert": "typeorm-ts-node-commonjs migration:revert -d src/orm/data-source.ts",
+    "seed": "ts-node -r dotenv/config src/orm/seed.ts"
   },
   "devDependencies": {
     "@ecom-co/eslint": "^2.0.2",
+    "@types/node": "^24.2.1",
+    "dotenv": "^16.4.5",
     "eslint": "^9.33.0",
+    "pg": "^8.16.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },
   "repository": {

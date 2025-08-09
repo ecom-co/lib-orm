@@ -89,6 +89,51 @@ await disconnectStandalone();
 - Core entities: `User`, `Product`
 - Transformers: `BooleanTransformer`, `NumericTransformer`
 
+## Migrations & Seeds (in this package)
+
+We provide local CLI to manage migrations/seeds without including them in the build.
+
+1) Prepare `.env` in this package root:
+
+```env
+DATABASE_URL=postgres://user:pass@host:5432/dbname
+NODE_ENV=development
+```
+
+2) Generate migration from current entities (diff-based):
+
+```bash
+# with custom name/path (recommended → name by table)
+npm run typeorm:generate -- src/migrations/users-drop-legacy-columns
+npm run typeorm:generate -- src/migrations/products-add-sku
+
+# or without args (TypeORM will auto-name)
+npm run typeorm:generate
+```
+
+3) Create an empty migration file (manual):
+
+```bash
+npm run typeorm:create -- src/migrations/InitSomething
+```
+
+4) Run / Revert migrations:
+
+```bash
+npm run typeorm:run
+npm run typeorm:revert
+```
+
+5) Seed:
+
+```bash
+npm run seed
+```
+
+Notes:
+- Migration/seed sources live in `src/migrations`, `src/orm`, `src/seeds` and are excluded from build via `tsconfig.build.json`.
+- If generate shows “No changes”, point to a fresh DB or create an empty migration and fill it.
+
 ## Release
 
 Convenience scripts:
