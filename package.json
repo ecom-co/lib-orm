@@ -1,6 +1,6 @@
 {
   "name": "@ecom-co/orm",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Shared persistence layer: entities, transformers, repository utils for e-commerce projects",
   "type": "module",
   "main": "dist/index.js",
