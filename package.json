@@ -1,0 +1,45 @@
+{
+  "name": "@ecom-co/orm",
+  "version": "0.1.0",
+  "description": "Shared persistence layer: entities, transformers, repository utils for e-commerce projects",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./entities/*": "./dist/entities/*.js",
+    "./transformers/*": "./dist/transformers/*.js",
+    "./datasource": "./dist/datasource/index.js",
+    "./nest": "./dist/nest/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@ecom-co/eslint": "^2.0.2",
+    "eslint": "^9.33.0",
+    "typescript": "^5.7.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/e-commerce-platform-co/lib-orm.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@nestjs/typeorm": "^11.0.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.25"
+  }
+}
