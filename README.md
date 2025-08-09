@@ -5,7 +5,7 @@ Shared TypeORM layer for e-commerce projects: entities, transformers, Nest helpe
 ## Installation
 
 ```bash
-npm install @ecom-co/orm typeorm @nestjs/typeorm reflect-metadata
+npm install @ecom-co/orm
 ```
 
 Enable decorators in your tsconfig:
@@ -27,59 +27,55 @@ import 'reflect-metadata';
 
 ## Usage
 
-### NestJS
+### NestJS (root-only imports)
 
-Root module:
+We expose everything from the root entry. Avoid subpath imports.
+
+#### forRootAsync
 
 ```ts
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Example } from '@ecom-co/orm';
+import { CORE_ENTITIES, TypeOrmModule } from '@ecom-co/orm';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL,
-      entities: [Example],
-      synchronize: false
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        url: config.get('DATABASE_URL'),
+        synchronize: false,
+        logging: config.get('NODE_ENV') !== 'production',
+        entities: CORE_ENTITIES, // [User, Product]
+        // or set autoLoadEntities: true and register CORE_ENTITIES via forFeature in each module
+      }),
     }),
   ],
 })
 export class AppModule {}
 ```
 
-Feature module:
+#### forFeature in feature modules
 
 ```ts
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Example } from '@ecom-co/orm';
+import { CORE_ENTITIES, TypeOrmModule } from '@ecom-co/orm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Example])],
+  imports: [TypeOrmModule.forFeature(CORE_ENTITIES)],
 })
 export class ExampleModule {}
-```
-
-Or use helpers:
-
-```ts
-import { createTypeOrmRootModule, createTypeOrmFeatureModule } from '@ecom-co/orm';
-
-createTypeOrmRootModule({ /* TypeOrmModuleOptions */ });
-createTypeOrmFeatureModule([/* entities */]);
 ```
 
 ### Standalone DataSource Helpers
 
 ```ts
-import { connectStandalone, disconnectStandalone, getCachedDataSource } from '@ecom-co/orm';
+import { connectStandalone, disconnectStandalone, getCachedDataSource, CORE_ENTITIES } from '@ecom-co/orm';
 
 const ds = await connectStandalone({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [/* entities */],
+  entities: CORE_ENTITIES,
 });
 
 // reuse later
@@ -90,7 +86,7 @@ await disconnectStandalone();
 ## Entities and Transformers
 
 - Base entity: `OrmBaseEntity` with `id`, `createdAt`, `updatedAt`, `deletedAt`
-- Example entities: `Example`, `User`
+- Core entities: `User`, `Product`
 - Transformers: `BooleanTransformer`, `NumericTransformer`
 
 ## Release
