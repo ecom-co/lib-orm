@@ -35,3 +35,9 @@ export const makeRepositoryExtensions = <TEntity extends object>() => ({
  * Use with `createExtendedRepositoryProviders(entities, makeDefaultRepositoryExtensions)`.
  */
 export const makeDefaultRepositoryExtensions = () => makeRepositoryExtensions<any>();
+
+/**
+ * Type for extended repository with custom methods
+ */
+export type ExtendedRepository<T extends object> = import('typeorm').Repository<T> &
+    ReturnType<typeof makeRepositoryExtensions<T>>;
