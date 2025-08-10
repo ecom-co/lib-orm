@@ -2,6 +2,11 @@
 
 Shared TypeORM layer for e-commerce projects: entities, transformers, Nest helpers, and DataSource utilities.
 
+- OrmModule: drop-in wrapper around Nest `TypeOrmModule` with optional health check
+- Re-export of `@nestjs/typeorm` and `typeorm` via `core`
+- Standalone DataSource helpers (connect/disconnect/cache)
+- Core entities and transformers
+
 ## Installation
 
 ```bash
@@ -31,7 +36,120 @@ import 'reflect-metadata';
 
 We expose everything from the root entry. Avoid subpath imports.
 
-#### forRootAsync
+#### OrmModule (drop-in wrapper + health)
+
+Mirror `TypeOrmModule` API with an extra `health` flag and a helper function.
+
+```ts
+import { Module } from '@nestjs/common';
+import { OrmModule, CORE_ENTITIES, checkTypeOrmHealthy } from '@ecom-co/orm';
+
+@Module({
+  imports: [
+    OrmModule.forRoot({
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      synchronize: false,
+      logging: process.env.NODE_ENV !== 'production',
+      entities: CORE_ENTITIES,
+      health: true,
+      // auto-extend repositories with default methods
+      extendRepositories: true,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Async version:
+
+```ts
+OrmModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    type: 'postgres',
+    url: config.get('DATABASE_URL'),
+    entities: CORE_ENTITIES,
+    health: true,
+    // async mode: provide entities explicitly when enabling extensions
+    extendRepositories: {
+      entities: CORE_ENTITIES,
+      // makeExtension: custom factory if needed; default includes findOneOrCreate/findOneOrUpdate
+    },
+  }),
+});
+```
+
+Health check usage (built-in):
+
+```ts
+// If you provided health: true, you can also inject 'ORM_HEALTH_CHECK' provider for a bound checker.
+import { Inject } from '@nestjs/common';
+import type { DataSource } from 'typeorm';
+import { checkTypeOrmHealthy } from '@ecom-co/orm';
+
+export class HealthService {
+  constructor(@Inject(DataSource) private readonly ds: DataSource) {}
+
+  async db() {
+    return checkTypeOrmHealthy(this.ds);
+  }
+}
+```
+
+Or inject the bound provider when `health: true` is set:
+
+```ts
+import { Inject } from '@nestjs/common';
+
+import { ORM_HEALTH_CHECK, OrmHealthCheckFn } from '@ecom-co/orm';
+
+export class HealthService {
+  constructor(@Inject(ORM_HEALTH_CHECK) private readonly ormHealth: OrmHealthCheckFn) {}
+
+  db() {
+    return this.ormHealth('database');
+  }
+}
+```
+
+Integrate with `@nestjs/terminus` (optional):
+
+```ts
+import { Controller, Get, Inject } from '@nestjs/common';
+import { HealthCheckService, HealthCheck } from '@nestjs/terminus';
+import type { HealthIndicatorResult } from '@nestjs/terminus';
+
+import { ORM_HEALTH_CHECK, OrmHealthCheckFn } from '@ecom-co/orm';
+
+@Controller('health')
+export class HealthController {
+  constructor(
+    private readonly health: HealthCheckService,
+    @Inject(ORM_HEALTH_CHECK) private readonly ormHealth: OrmHealthCheckFn,
+  ) {}
+
+  @Get('db')
+  @HealthCheck()
+  check() {
+    return this.health.check([() => this.ormHealth('db')]);
+  }
+}
+```
+
+Typing with Terminus (optional):
+
+```ts
+// If your app uses @nestjs/terminus, you can type the return shape via a type-only import.
+// Note: This import is type-only; @nestjs/terminus must be installed in your app for types to resolve.
+import type { HealthIndicatorResult } from '@nestjs/terminus';
+
+async function dbCheck(ds: DataSource): Promise<HealthIndicatorResult> {
+  return checkTypeOrmHealthy(ds);
+}
+```
+
+You can still import `TypeOrmModule` and `typeorm` directly from this package via `core` re-exports if preferred.
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -81,6 +199,20 @@ const ds = await connectStandalone({
 // reuse later
 const cached = getCachedDataSource();
 await disconnectStandalone();
+```
+
+### Environment-based setup
+
+```ts
+import { OrmModule, CORE_ENTITIES } from '@ecom-co/orm';
+
+OrmModule.forRoot({
+  type: 'postgres',
+  url: process.env.DATABASE_URL, // e.g. postgres://user:pass@host:5432/db
+  entities: CORE_ENTITIES,
+  synchronize: false,
+  health: true,
+});
 ```
 
 ## Entities and Transformers
@@ -133,6 +265,48 @@ npm run seed
 Notes:
 - Migration/seed sources live in `src/migrations`, `src/orm`, `src/seeds` and are excluded from build via `tsconfig.build.json`.
 - If generate shows “No changes”, point to a fresh DB or create an empty migration and fill it.
+
+## API
+
+- `OrmModule.forRoot`, `OrmModule.forRootAsync` (arrow static methods)
+- `checkTypeOrmHealthy(ds: DataSource)` returns `{ [key: string]: { status: 'up' | 'down'; latencyMs: number } }`
+- Re-exports: `TypeOrmModule` and `typeorm` types under `core`
+- Standalone helpers: `connectStandalone`, `disconnectStandalone`, `getCachedDataSource`
+
+### Extend Repository with custom methods
+
+Use `extendRepository` with typed extensions:
+
+```ts
+import { extendRepository, makeRepositoryExtensions } from '@ecom-co/orm';
+import { User } from '@ecom-co/orm';
+
+const userRepo = extendRepository(dataSource, User, makeRepositoryExtensions<User>());
+
+// find existing or create
+await userRepo.findOneOrCreate({ email }, { email, name });
+
+// find existing then update
+await userRepo.findOneOrUpdate({ id: userId }, { name: 'New Name' });
+```
+
+Register globally for entities via providers:
+
+```ts
+import { Module } from '@nestjs/common';
+import { createExtendedRepositoryProviders, makeDefaultRepositoryExtensions } from '@ecom-co/orm';
+import { CORE_ENTITIES } from '@ecom-co/orm';
+
+@Module({
+  providers: [
+    ...createExtendedRepositoryProviders(CORE_ENTITIES, makeDefaultRepositoryExtensions),
+  ],
+  exports: [
+    ...createExtendedRepositoryProviders(CORE_ENTITIES, makeDefaultRepositoryExtensions),
+  ],
+})
+export class RepositoryExtensionsModule {}
+```
 
 ## Release
 

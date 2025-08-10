@@ -29,3 +29,6 @@ export const createExtendedRepositoryProviders = (
         useFactory: (dataSource: DataSource) =>
             dataSource.getRepository(entity as EntityTarget<any>).extend(makeExtension()),
     }));
+
+// Re-export factory for default extensions to import from this module for convenience
+export { makeDefaultRepositoryExtensions } from './extensions';
