@@ -4,6 +4,5 @@ export * from './datasource';
 export * from './datasource/standalone';
 export * from './repository/extend-repository';
 export * from './repository/extensions';
-export * from './repository/decorators';
 export * from './core';
 export * from './orm.module';
