@@ -2,10 +2,17 @@ import 'reflect-metadata';
 import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 // Local minimal type compatible with @nestjs/terminus HealthIndicatorResult
 export type HealthIndicatorResult = Record<string, { status: 'up' | 'down'; latencyMs: number; [k: string]: unknown }>;
-import { TypeOrmModule, TypeOrmModuleAsyncOptions, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import {
+    TypeOrmModule,
+    TypeOrmModuleAsyncOptions,
+    TypeOrmModuleOptions,
+    TypeOrmModule as NestTypeOrmModule,
+} from '@nestjs/typeorm';
+import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
 
 import { DataSource } from 'typeorm';
 
+import { createBaseRepositoryProviders } from './repository/extend-repository';
 
 export type OrmModuleOptions = TypeOrmModuleOptions & {
     health?: boolean;
@@ -77,4 +84,18 @@ export class OrmModule {
             exports: [...(healthProvider ? [healthProvider] : [])],
         };
     };
+
+    // Convenience wrappers to avoid importing Nest TypeOrmModule directly in consumers
+    static forFeature = (entities: EntityClassOrSchema[], dataSource?: string): DynamicModule => ({
+        module: OrmModule,
+        imports: [NestTypeOrmModule.forFeature(entities, dataSource)],
+        exports: [NestTypeOrmModule],
+    });
+
+    static forFeatureExtended = (entities: EntityClassOrSchema[], dataSource?: string): DynamicModule => ({
+        module: OrmModule,
+        imports: [NestTypeOrmModule.forFeature(entities, dataSource)],
+        providers: createBaseRepositoryProviders(entities),
+        exports: [NestTypeOrmModule],
+    });
 }
