@@ -1,9 +1,9 @@
 # @ecom-co/orm
 
-Shared TypeORM layer for e-commerce projects: entities, transformers, Nest helpers, and DataSource utilities.
+Shared TypeORM layer for e-commerce projects: entities, transformers, Nest helpers, DataSource utilities, and an extended Repository.
 
 - OrmModule: drop-in wrapper around Nest `TypeOrmModule` with optional health check
-- Re-export of `@nestjs/typeorm` and `typeorm` via `core`
+- `BaseRepository<T>`: extends TypeORM `Repository<T>` with extra helpers
 - Standalone DataSource helpers (connect/disconnect/cache)
 - Core entities and transformers
 
@@ -38,8 +38,6 @@ We expose everything from the root entry. Avoid subpath imports.
 
 #### OrmModule (drop-in wrapper + health)
 
-Mirror `TypeOrmModule` API with an extra `health` flag and a helper function.
-
 ```ts
 import { Module } from '@nestjs/common';
 import { OrmModule, CORE_ENTITIES, checkTypeOrmHealthy } from '@ecom-co/orm';
@@ -53,8 +51,6 @@ import { OrmModule, CORE_ENTITIES, checkTypeOrmHealthy } from '@ecom-co/orm';
       logging: process.env.NODE_ENV !== 'production',
       entities: CORE_ENTITIES,
       health: true,
-      // auto-extend repositories with default methods
-      extendRepositories: true,
     }),
   ],
 })
@@ -71,11 +67,6 @@ OrmModule.forRootAsync({
     url: config.get('DATABASE_URL'),
     entities: CORE_ENTITIES,
     health: true,
-    // async mode: provide entities explicitly when enabling extensions
-    extendRepositories: {
-      entities: CORE_ENTITIES,
-      // makeExtension: custom factory if needed; default includes findOneOrCreate/findOneOrUpdate
-    },
   }),
 });
 ```
@@ -149,7 +140,7 @@ async function dbCheck(ds: DataSource): Promise<HealthIndicatorResult> {
 }
 ```
 
-You can still import `TypeOrmModule` and `typeorm` directly from this package via `core` re-exports if preferred.
+You can also import `TypeOrmModule` and `typeorm` directly from this package via `core` re-exports if preferred.
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -173,16 +164,30 @@ import { CORE_ENTITIES, TypeOrmModule } from '@ecom-co/orm';
 export class AppModule {}
 ```
 
-#### forFeature in feature modules
+#### Feature modules with extended repositories
 
 ```ts
 import { Module } from '@nestjs/common';
-import { CORE_ENTITIES, TypeOrmModule } from '@ecom-co/orm';
+import { OrmModule, CORE_ENTITIES } from '@ecom-co/orm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature(CORE_ENTITIES)],
+  imports: [OrmModule.forFeatureExtended(CORE_ENTITIES)],
 })
 export class ExampleModule {}
+```
+
+Inject the extended repo in services using `BaseRepository<T>`:
+
+```ts
+import { InjectRepository } from '@nestjs/typeorm';
+import { BaseRepository, User } from '@ecom-co/orm';
+
+export class ExampleService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: BaseRepository<User>,
+  ) {}
+}
 ```
 
 ### Standalone DataSource Helpers
@@ -273,39 +278,13 @@ Notes:
 - Re-exports: `TypeOrmModule` and `typeorm` types under `core`
 - Standalone helpers: `connectStandalone`, `disconnectStandalone`, `getCachedDataSource`
 
-### Extend Repository with custom methods
+### BaseRepository helpers
 
-Use `extendRepository` with typed extensions:
-
-```ts
-import { extendRepository, makeRepositoryExtensions } from '@ecom-co/orm';
-import { User } from '@ecom-co/orm';
-
-const userRepo = extendRepository(dataSource, User, makeRepositoryExtensions<User>());
-
-// find existing or create
-await userRepo.findOneOrCreate({ email }, { email, name });
-
-// find existing then update
-await userRepo.findOneOrUpdate({ id: userId }, { name: 'New Name' });
-```
-
-Register globally for entities via providers:
+`BaseRepository<T>` adds a few convenience methods:
 
 ```ts
-import { Module } from '@nestjs/common';
-import { createExtendedRepositoryProviders, makeDefaultRepositoryExtensions } from '@ecom-co/orm';
-import { CORE_ENTITIES } from '@ecom-co/orm';
-
-@Module({
-  providers: [
-    ...createExtendedRepositoryProviders(CORE_ENTITIES, makeDefaultRepositoryExtensions),
-  ],
-  exports: [
-    ...createExtendedRepositoryProviders(CORE_ENTITIES, makeDefaultRepositoryExtensions),
-  ],
-})
-export class RepositoryExtensionsModule {}
+await userRepo.findOneOrCreate({ email }, { name: 'Guest' });
+await userRepo.findOneAndUpdate({ id }, { name: 'New' }, { upsert: true });
 ```
 
 ## Release
