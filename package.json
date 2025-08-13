@@ -26,7 +26,7 @@
     "seed": "ts-node -r dotenv/config src/orm/seed.ts"
   },
   "devDependencies": {
-    "@ecom-co/eslint": "^2.0.2",
+    "@ecom-co/eslint": "^2.0.1",
     "@types/node": "^24.2.1",
     "dotenv": "^16.4.5",
     "eslint": "^9.33.0",
