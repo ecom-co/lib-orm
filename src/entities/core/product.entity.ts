@@ -15,9 +15,12 @@ export class Product extends OrmBaseEntity {
     @Column({ type: 'varchar', length: 255 })
     description!: string;
 
-    @Column({ type: 'varchar', length: 255 })
-    userId!: string;
+    @Column({ name: 'userId' })
+    userId!: number;
 
-    @ManyToOne(() => User, (user) => user.products)
+    @ManyToOne(() => User, (user) => user.products, {
+        cascade: true,
+        eager: true,
+    })
     user!: User;
 }
