@@ -1,5 +1,7 @@
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
+import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import type { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
 
 export const createTypeOrmRootModule = (options: TypeOrmModuleOptions) => TypeOrmModule.forRoot(options);
 

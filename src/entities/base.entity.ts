@@ -2,21 +2,21 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     PrimaryGeneratedColumn,
-    UpdateDateColumn,
     BaseEntity as TypeOrmBaseEntity,
+    UpdateDateColumn,
 } from 'typeorm';
 
 export abstract class OrmBaseEntity extends TypeOrmBaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @CreateDateColumn({ type: 'timestamptz', name: 'createdAt' })
+    @CreateDateColumn({ name: 'createdAt', type: 'timestamptz' })
     createdAt!: Date;
 
-    @UpdateDateColumn({ type: 'timestamptz', name: 'updatedAt' })
+    @UpdateDateColumn({ name: 'updatedAt', type: 'timestamptz' })
     updatedAt!: Date;
 
-    @DeleteDateColumn({ type: 'timestamptz', name: 'deletedAt', nullable: true })
+    @DeleteDateColumn({ name: 'deletedAt', type: 'timestamptz', nullable: true })
     deletedAt?: Date | null;
 
     // Common helpers for all entities
@@ -24,11 +24,11 @@ export abstract class OrmBaseEntity extends TypeOrmBaseEntity {
         return this.deletedAt != null;
     }
 
-    markDeleted(at: Date = new Date()): void {
-        this.deletedAt = at;
-    }
-
     clearDeleted(): void {
         this.deletedAt = null;
+    }
+
+    markDeleted(at: Date = new Date()): void {
+        this.deletedAt = at;
     }
 }

@@ -1,4 +1,5 @@
 import 'reflect-metadata';
-import { DataSource, DataSourceOptions } from 'typeorm';
+import type { DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 export const createAppDataSource = (options: DataSourceOptions) => new DataSource(options);

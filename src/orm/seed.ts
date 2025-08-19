@@ -1,9 +1,11 @@
 import 'reflect-metadata';
-import dataSource from './data-source';
 import { runSeeds } from '../seeds';
+
+import dataSource from './data-source';
 
 const main = async (): Promise<void> => {
     const ds = await dataSource.initialize();
+
     try {
         await runSeeds(ds);
     } finally {
